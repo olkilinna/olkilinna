@@ -56,6 +56,43 @@ git commit -m "Describe your changes here"
 git push
 ```
 
+## 🚀 Production Keystatic Setup (GitHub Mode)
+
+Currently, the Keystatic admin panel only works locally (`npm run dev`). To enable the admin panel on the live Netlify site (e.g., `olkilinna.fi/admin`), you must switch Keystatic to **GitHub Mode**. This allows the live site to authenticate with GitHub and commit content changes directly to the repository.
+
+### Steps to Enable:
+1. **Create a GitHub App**: Run the Keystatic CLI tool to generate the app configuration:
+   ```bash
+   npx @keystatic/create-app
+   ```
+   Follow the prompts to create the app in the `olkilinna` GitHub organization. Save the provided **App ID** and **Private Key**.
+
+2. **Update `keystatic.config.tsx`**: Change the storage mode to GitHub:
+   ```typescript
+   export default config({
+     storage: {
+       kind: 'github',
+       repo: { owner: 'olkilinna', name: 'olkilinna' },
+     },
+     // ... existing collections
+   })
+   ```
+
+3. **Update `astro.config.mjs`**: Remove the development-only restriction so Keystatic loads in production:
+   ```javascript
+   integrations: [
+     react(),
+     markdoc(),
+     keystatic(), // Removed the `isDev ? ... : null` check
+   ]
+   ```
+
+4. **Add Environment Variables to Netlify**: In your Netlify project settings, add the following environment variables so the live site can authenticate:
+   - `KEYSTATIC_GITHUB_APP_ID` (Your App ID)
+   - `KEYSTATIC_GITHUB_APP_PRIVATE_KEY` (Your Private Key, ensure it includes the `-----BEGIN PRIVATE KEY-----` lines)
+
+Once deployed, visiting `/admin` on the live site will prompt a GitHub login, and any saved changes will automatically trigger a new Netlify build.
+
 ## 👀 Want to learn more?
 
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
