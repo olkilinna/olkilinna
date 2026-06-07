@@ -1,0 +1,85 @@
+---
+import Markdown from './Markdown.astro'
+import RelatedPostsList from './RelatedPostsList.astro'
+
+const { heading, image, relatedPosts, content } = Astro.props
+
+// Handle image as either a string (URL) or an object with .src
+const imgUrl = typeof image === 'string' ? image : image?.src
+---
+
+<details
+  class="group w-full js-accordion md:flex md:flex-row md:justify-start md:items-start md:gap-10 my-4 mb-4 md:mb-15"
+>
+  <summary class="list-none cursor-pointer md:pointer-events-none md:cursor-default">
+    <div
+      class="h-full w-full flex flex-col md:flex-row items-start justify-between gap-5 md:gap-10"
+    >
+      {
+        imgUrl && (
+          <div
+            class="bg-cover w-full md:w-60 lg:w-80 bg-center h-15 md:h-30 lg:h-40 flex items-center md:justify-center justify-between px-5"
+            style={`background-image: url('${imgUrl}')`}
+          >
+            <h3 class="not-prose text-[1.5rem] lg:text-[2rem] uppercase font-heading font-bold bg-white text-black leading-[1.5rem] lg:leading-[2rem] pt-2 px-2.5">
+              {heading}
+            </h3>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="25"
+              height="25"
+              fill="currentColor"
+              aria-hidden="true"
+              class="arrow bg-white text-black block md:hidden transition-transform duration-200 group-open:-rotate-90"
+              viewBox="0 0 256 256"
+            >
+              <path d="M168.49,199.51a12,12,0,0,1-17,17l-80-80a12,12,0,0,1,0-17l80-80a12,12,0,0,1,17,17L97,128Z" />
+            </svg>
+          </div>
+        )
+      }
+
+      {
+        !imgUrl && (
+          <div class="w-full flex justify-between items-center md:justify-start">
+            <h3 class="text-[3rem] font-heading font-bold bg-white text-black px-3 py-1.5 rounded-md shadow-sm">
+              {heading}
+            </h3>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="25"
+              height="25"
+              fill="currentColor"
+              aria-hidden="true"
+              class="arrow bg-white text-black block md:hidden transition-transform duration-200 group-open:-rotate-90"
+              viewBox="0 0 256 256"
+            >
+              <path d="M168.49,199.51a12,12,0,0,1-17,17l-80-80a12,12,0,0,1,0-17l80-80a12,12,0,0,1,17,17L97,128Z" />
+            </svg>
+          </div>
+        )
+      }
+    </div>
+  </summary>
+
+  <div class="content hidden group-open:block md:block px-1 grow pt-5 md:pt-0 w-full">
+    <Markdown content={content} class="mb-4" />
+    {relatedPosts && relatedPosts.length > 0 && <RelatedPostsList slugs={relatedPosts} />}
+  </div>
+</details>
+
+<script is:inline>
+  function syncAccordionState() {
+    const isDesktop = window.innerWidth >= 768
+    document.querySelectorAll('.js-accordion').forEach((el) => {
+      if (isDesktop) {
+        el.setAttribute('open', '')
+      } else {
+        el.removeAttribute('open')
+      }
+    })
+  }
+
+  syncAccordionState()
+  window.addEventListener('resize', syncAccordionState)
+</script>

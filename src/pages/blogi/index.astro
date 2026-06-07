@@ -1,0 +1,179 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import PostCard from '../../components/PostCard.astro'
+import { createReader } from '@keystatic/core/reader'
+import keystaticConfig from '../../../keystatic.config'
+
+type PostEntry = {
+  title: string | { name: string; slug: string }
+  arrange?: number
+  year?: string
+  date?: string
+  hero?: string
+  ingressi?: string
+  tags?: string[]
+  galleries?: any[]
+  youtube?: string
+  videoFile?: string
+  content?: any
+}
+
+type PostItem = {
+  slug: string
+  entry: PostEntry
+}
+
+type TagItem = {
+  slug: string
+  entry: {
+    title: string | { name: string; slug: string }
+  }
+}
+
+const reader = createReader(process.cwd(), keystaticConfig)
+const keystaticPosts = (await reader.collections.posts.all()) as PostItem[]
+const keystaticTags = (await reader.collections.tags.all()) as TagItem[]
+
+// Format data for the template
+const postsData = keystaticPosts.map((post) => ({
+  slug: post.slug,
+  title: typeof post.entry.title === 'string' ? post.entry.title : post.entry.title?.name,
+  date: post.entry.date,
+  arrange: post.entry.arrange,
+  hero: post.entry.hero,
+  tags: post.entry.tags || [],
+}))
+
+const tagsData = keystaticTags.map((tag) => ({
+  slug: tag.slug,
+  title: typeof tag.entry.title === 'string' ? tag.entry.title : tag.entry.title?.name,
+}))
+---
+
+<Layout title="Blogi | Olkilinna" heroImage="/blogi-hero.webp">
+  <main class="w-full mx-auto pb-12">
+    <section
+      class="bg-[url('/blogi-hero.webp')] bg-cover bg-center h-[40vh] md:h-100 flex items-center justify-center"
+    >
+      <h1
+        class="text-[4rem] md:text-[5rem] uppercase font-bold font-heading bg-white text-black pt-3 px-4 leading-16 md:leading-20"
+      >
+        Blogi
+      </h1>
+    </section>
+    <div class="my-10 text-center px-6">
+      <p>
+        Kaikki blogin postaukset löytyvät alta ja ne on oletuksena järjestetty uusimmasta
+        vanhimpaan.
+      </p>
+    </div>
+
+    <div class="flex flex-col md:flex-row gap-10 px-6 items-start">
+      <aside class="bg-[#f4f4f5] w-full md:max-w-80 flex-col p-6 h-fit">
+        <h2
+          class="font-heading text-2xl uppercase font-semibold mb-5 border-b border-gray-300 pb-1"
+        >
+          Suodattimet
+        </h2>
+        <div class="flex flex-col gap-1 mb-5">
+          <h3 class="font-heading text-xl font-medium">Järjestys</h3>
+          <select id="sort-select" class="bg-white border p-2 border-gray-300 w-full">
+            <option value="newest">Uusimmat ensin</option>
+            <option value="oldest">Vanhimmat ensin</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-2">
+          <div class="flex flex-row justify-between">
+            <h3 class="font-heading text-xl font-medium">Kategoriat</h3>
+            <button id="clear-filters" class="text-sm text-gray-500 hover:underline cursor-pointer"
+              >Tyhjennä</button
+            >
+          </div>
+
+          <ul class="space-y-2">
+            {
+              tagsData.map((tag) => (
+                <li>
+                  <label class="flex flex-row items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="tag-filter block h-4 w-4" value={tag.slug} />
+                    <span>{tag.title}</span>
+                  </label>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </aside>
+
+      <ul id="posts-list" class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+        {
+          postsData.map((post) => (
+            <li
+              class="post-item w-full h-40"
+              data-arrange={post.arrange || 0}
+              data-tags={post.tags.join(',')}
+            >
+              <PostCard
+                slug={post.slug}
+                title={post.title}
+                date={post.date}
+                arrange={post.arrange}
+                hero={post.hero}
+              />
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </main>
+
+  <script is:inline>
+    // @ts-nocheck
+    const sortSelect = document.getElementById('sort-select')
+    const tagFilters = document.querySelectorAll('.tag-filter')
+    const postsList = document.getElementById('posts-list')
+
+    if (!sortSelect || !postsList) {
+      throw new Error('Required DOM elements not found')
+    }
+
+    const allPostItems = Array.from(postsList.querySelectorAll('.post-item'))
+
+    function filterAndSort() {
+      const sortOrder = sortSelect.value
+      const selectedTags = Array.from(tagFilters)
+        .filter((cb) => cb.checked)
+        .map((cb) => cb.value)
+
+      const visibleItems = allPostItems.filter((item) => {
+        const tags = item.dataset.tags?.split(',').filter(Boolean) || []
+        return selectedTags.every((tag) => tags.includes(tag))
+      })
+
+      visibleItems.sort((a, b) => {
+        const valA = Number(a.dataset.arrange) || 0
+        const valB = Number(b.dataset.arrange) || 0
+        return sortOrder === 'newest' ? valB - valA : valA - valB
+      })
+
+      postsList.innerHTML = ''
+      visibleItems.forEach((item) => postsList.appendChild(item))
+    }
+
+    sortSelect.addEventListener('change', filterAndSort)
+    tagFilters.forEach((cb) => cb.addEventListener('change', filterAndSort))
+
+    const clearFiltersBtn = document.getElementById('clear-filters')
+    if (clearFiltersBtn) {
+      clearFiltersBtn.addEventListener('click', () => {
+        sortSelect.value = 'newest'
+        tagFilters.forEach((cb) => {
+          cb.checked = false
+        })
+        filterAndSort()
+      })
+    }
+
+    filterAndSort()
+  </script>
+</Layout>

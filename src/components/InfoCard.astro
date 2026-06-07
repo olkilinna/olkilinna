@@ -1,0 +1,50 @@
+---
+import Markdown from './Markdown.astro'
+
+const { heading, content } = Astro.props
+---
+
+<li class="bg-light-grey h-full py-2 pb-0 text-black">
+  <details class="group w-full js-accordion">
+    <summary
+      class="button w-full border-b px-6 py-2 border-gray-300 flex justify-between items-center cursor-pointer list-none md:pointer-events-none md:cursor-default"
+    >
+      <h3 class="not-prose text-xl font-heading font-medium">
+        {heading}
+      </h3>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        fill="currentColor"
+        aria-hidden="true"
+        class="arrow block md:hidden transition-transform duration-200 group-open:-rotate-90"
+        viewBox="0 0 256 256"
+      >
+        <path
+          d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"
+        ></path>
+      </svg>
+    </summary>
+
+    <div class="content hidden group-open:block md:block pt-3 px-3">
+      <Markdown content={content} class="mb-4" />
+    </div>
+  </details>
+</li>
+
+<script is:inline>
+  function syncAccordionState() {
+    const isDesktop = window.innerWidth >= 768
+    document.querySelectorAll('.js-accordion').forEach((el) => {
+      if (isDesktop) {
+        el.setAttribute('open', '')
+      } else {
+        el.removeAttribute('open')
+      }
+    })
+  }
+
+  syncAccordionState()
+  window.addEventListener('resize', syncAccordionState)
+</script>

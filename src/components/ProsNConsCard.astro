@@ -1,0 +1,64 @@
+---
+import Markdown from './Markdown.astro'
+
+const { heading, content, color = '' } = Astro.props
+
+const isColorCode = color.startsWith('#') || color.startsWith('rgb')
+
+// Summary background
+const summaryStyle = isColorCode ? { backgroundColor: color } : undefined
+const summaryClass = !isColorCode ? color : ''
+
+// Div border
+const divBorderStyle = isColorCode ? { borderColor: color } : undefined
+const divBorderClass = !isColorCode ? color : ''
+---
+
+<li class="pros-n-cons-card h-full not-prose">
+  <details class="group w-full js-accordion">
+    <summary
+      class={`w-full text-white px-4 py-2 flex justify-between items-center cursor-pointer list-none ${summaryClass}`}
+      style={summaryStyle}
+    >
+      <h3 class="not-prose text-xl font-heading font-medium">
+        {heading}
+      </h3>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        fill="currentColor"
+        aria-hidden="true"
+        class="arrow block transition-transform duration-200 group-open:-rotate-90"
+        viewBox="0 0 256 256"
+      >
+        <path
+          d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"
+        ></path>
+      </svg>
+    </summary>
+
+    <div
+      class={`content hidden group-open:block py-4 px-5 not-prose prose-blockquote:ml-0 border-2 ${divBorderClass}`}
+      style={divBorderStyle}
+    >
+      <Markdown content={content} class="mb-4 text-black" />
+    </div>
+  </details>
+</li>
+
+<script is:inline>
+  function syncAccordionState() {
+    const isDesktop = window.innerWidth >= 768
+    document.querySelectorAll('.js-accordion').forEach((el) => {
+      if (isDesktop) {
+        el.setAttribute('open', '')
+      } else {
+        el.removeAttribute('open')
+      }
+    })
+  }
+
+  syncAccordionState()
+  window.addEventListener('resize', syncAccordionState)
+</script>

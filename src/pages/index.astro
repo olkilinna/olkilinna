@@ -1,0 +1,170 @@
+---
+import Layout from '../layouts/Layout.astro'
+import Image from 'astro/components/Image.astro'
+import { createReader } from '@keystatic/core/reader'
+import keystaticConfig from '../../keystatic.config'
+
+const reader = createReader(process.cwd(), keystaticConfig)
+const newsEntries = await reader.collections.news.all()
+
+const parseNewsDate = (value?: string) => {
+  if (!value) return 0
+
+  const parts = value.includes('-') ? value.split('-') : value.split('.')
+  const parsed = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])).getTime()
+
+  return Number.isNaN(parsed) ? 0 : parsed
+}
+
+const formatNewsDate = (value?: string) => {
+  if (!value) return ''
+
+  const [year, month, day] = value.split('-')
+  return `${day}.${month}.${year}`
+}
+
+const sortedNewsItems = await Promise.all(
+  [...newsEntries]
+    .sort((a, b) => parseNewsDate(b.entry.date) - parseNewsDate(a.entry.date))
+    .map(async (entry) => {
+      // Dynamically import the .md file to get the Astro Content component
+      const newsModule = await import(`../content/news/${entry.slug}.mdoc`)
+      return {
+        title: entry.entry.title,
+        date: entry.entry.date,
+        Content: newsModule.Content,
+      }
+    })
+)
+
+const heading = 'text-2xl leading-tight lg:text-3xl font-bold mb-4 font-heading'
+const materials =
+  'bg-white font-heading text-[1.5rem] lg:text-[2rem] uppercase leading-none font-bold w-fit text-center ml-auto mr-auto px-3 pt-1 lg:pt-2'
+---
+
+<Layout title="Etusivu | Olkilinna" heroImage="/hero.webp">
+  <section
+    class="bg-[url('/hero.webp')] bg-cover bg-center w-full h-[50vh] lg:h-162.5 flex flex-col items-center justify-center"
+  >
+    <p
+      class="font-heading mt-4 text-lg bg-black text-white p-2 pt-3 px-3 font-semibold text-[1.25rem] lg:text-[1.5rem] mb-3 leading-4"
+    >
+      OLJESTA TALO JA SEINIIN SAVEA
+    </p>
+
+    <h1
+      class="bg-white pt-4 pb-0 px-6 font-heading font-bold text-black text-[3.5rem] lg:text-[6.5rem] leading-none"
+    >
+      OLKILINNA
+    </h1>
+  </section>
+
+  <section
+    class="w-full lg:max-w-350 mx-auto px-7 py-7 gap-7 lg:py-10 pb-7 lg:pb-20 flex flex-col lg:flex-row lg:gap-12"
+  >
+    <main class="w-full">
+      <h2 class={heading}>LUONNONMUKAINEN RAKENTAMINEN - MIKSI JA MITEN?</h2>
+
+      <p>
+        Tämä blogi on tehty sitä varten, että kaikki luonnollisesta rakentamisesta kiinnostuneet
+        voivat tutustua projektiimme. Haluan jakaa tietoa siitä, mitä materiaaleja valitsimme
+        taloomme ja miksi. Se voi auttaa jotakuta muuta samantapaisen projektin alkuun. <br /><br /> Rakennamme
+        siis taloa, jossa käytetään mahdollisimman paljon luonnollisia ainesosia - ts. vältämme kaikkia
+        ylimääräisiä muoveja, liimoja, maaleja, kivi- ja lasivilloja sekä sementtiä / betonia. Haluamme
+        käyttää materiaaleja, jotka eivät luontoon joutuessaan vahingoita sitä. Mielestämme on loogista
+        ajatella, että tällaisista materiaaleista on myös hyvä rakentaa koti, jossa vietämme suurimman
+        osan elinajastamme. Tarkemmin tietoa valitsemistamme materiaaleista löytyy sivulta <a
+          class="underline font-semibold hover:text-yellow-600 duration-200"
+          href="/talomme-resepti">Talomme resepti</a
+        >, mutta käytännössä meille se tarkoitti näitä materiaaleja:
+        <br /><br />
+      </p>
+
+      <ul class="flex flex-row gap-2 lg:gap-4 mb-10 w-full">
+        <li
+          class="bg-[url('/src/assets/materials/olkilinna-materiaalit-olki.webp')] bg-cover p-3 w-[33%] h-[150px] flex flex-row items-center"
+        >
+          <p class={materials}>Olki</p>
+        </li>
+        <li
+          class="bg-[url('/src/assets/materials/olkilinna-materiaalit-savi.webp')] bg-cover p-3 w-[33%] h-[150px] flex flex-row items-center"
+        >
+          <p class={materials}>Savi</p>
+        </li>
+        <li
+          class="bg-[url('/src/assets/materials/olkilinna-materiaalit-puu.webp')] bg-cover p-3 w-[33%] h-[150px] flex flex-row items-center"
+        >
+          <p class={materials}>Puu</p>
+        </li>
+      </ul>
+
+      <h3 class={heading}>STARTTI SISÄILMAONGELMISTA</h3>
+      <p class="mb-10">
+        Se, miksi ylipäätään ajauduimme rakentamaan kotiamme tällaisella menetelmällä, johtuu
+        kamppailustamme sisäilmaongelmien kanssa. Olemme kolmihenkinen perhe - minä sekä vanhempani.
+        Opiskellessani ammattikoulussa asuin kotona vanhempieni luona ja olimme vuokralla
+        kerrostalossa Turun keskustassa. Asuimme siellä n. 3 vuotta ja sinä aikana sairastuimme
+        pahasti. Samoin kävi myös koirallemme, seinänaapurillemme sekä sukulaiselleni, joka asui
+        meillä vain puoli vuotta. Minulle puhkesi autoimmuunisairaus, joka rajoittaa jokapäiväistä
+        elämää, jaksamista ja työntekoa.
+        <br /><br />
+        Emme aluksi osanneet yhdistää terveysongelmiamme asuntoon, jossa asuimme. Aloimme kuitenkin myöhemmin
+        epäilemään sisäilmaongelmia, sillä tulehduskierteemme loppuivat ja olomme parani aina, kun olimme
+        matkoilla tai muuten pois asunnosta. Viimeistään siinä vaiheessa, kun keittiön katosta alkoi vuotamaan
+        litratolkulla vettä ja näimme, miten huonosti taloyhtiön puolesta asia korjattiin, tajusimme asian
+        todellisen laidan.
+      </p>
+      <blockquote class="border-l-2 border-yellow-500 ml-4 pl-4 p-2 italic mb-10 text-[1.2rem]">
+        Näimme lähietäisyydeltä sekä rakennus- että taloyhtiöiden välinpitämättömyyden ongelmien
+        korjaamiseen.
+      </blockquote>
+      <p class="mb-10">
+        Muutettuamme pois tästä asunnosta, viiden vuoden ajan minä ja vanhempani kokeilimme asumista
+        useissa eri ikäluokan rakennuksissa. Yksikään asunto ei ollut sellainen, missä ei olisi jo
+        tapahtunut vesivahinkoa ennen muuttoamme tai siellä asumisemme aikana. Näimme
+        lähietäisyydeltä sekä rakennus- että taloyhtiöiden välinpitämättömyyden ongelmien
+        korjaamiseen. Tämän prosessin aikana menetimme koko omaisuutemme kahdesti. Emme pystyneet
+        asumaan yhdessäkään talossa ilman ongelmia.
+        <br /><br />
+        Oman kodin rakentamisesta tuli meille viimeinen "oljenkorsi".
+      </p>
+
+      <h3 class={heading}>MEIDÄN VALINTA</h3>
+      <p class="mb-4">
+        Tässä blogissa kirjoitan meidän valinnoistamme, jotka nojautuvat omiin asettamiimme
+        periaatteisiin. Valintamme tai periaatteemme eivät ehkä toimi, ole välttämättömiä tai
+        tarpeellisia sinun tapauksessasi.
+      </p>
+      <p class="mb-4">
+        Jos olet rakentamassa tai ostamassa tonttia, ota selvää rakennusvaatimuksista kuntasi
+        rakennustarkastajalta. Kannustan jokaista ottamaan selvää asioista useista eri lähteistä ja
+        tekemään omat johtopäätöset kuultujen ja tutkittujen faktojen pohjalta. Pidän yhtä tärkeänä
+        myös kuunnella omaa kehoa, olotilaa ja joskus myös intuitiota.
+      </p>
+    </main>
+
+    <aside
+      id="news"
+      class="w-full order-first lg:order-0 lg:max-w-[30%] [&_a]:underline [&_a]:font-semibold [&_a]:transition-colors [&_a]:duration-200 [&_a:hover]:text-yellow-600"
+    >
+      <h2 class="text-2xl leading-tight lg:text-3xl font-semibold mb-2 font-heading">
+        Ajankohtaista
+      </h2>
+      <ul class="space-y-4 p-5 w-full h-[300px] lg:h-[600px] bg-gray-100 overflow-scroll">
+        {
+          sortedNewsItems.map((item) => (
+            <li class="border-b border-gray-300 pb-4">
+              <div>
+                <p class="text-[0.9rem] mb-1">{formatNewsDate(item?.date)}</p>
+                <h3 class="text-xl font-semibold font-heading mb-1">{item?.title ?? 'Untitled'}</h3>
+                <div class="[&_p]:mb-2 last:[&_p]:mb-0">
+                  <item.Content />
+                </div>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </aside>
+  </section>
+</Layout>

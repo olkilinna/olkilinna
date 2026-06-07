@@ -1,0 +1,535 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import { setPostContext } from '../../lib/post-context'
+import { createReader } from '@keystatic/core/reader'
+import { proseClasses } from '../../lib/prose-styles'
+import keystaticConfig from '../../../keystatic.config'
+import fs from 'node:fs'
+import path from 'node:path'
+
+type PostEntry = {
+  title: string | { name: string; slug: string }
+  arrange?: number
+  year?: string
+  date?: string
+  hero?: string
+  ingressi?: string
+  tags?: string[]
+  galleries?: any[]
+  youtube?: string
+  videoFile?: string
+  content?: any
+}
+
+type PostItem = {
+  slug: string
+  entry: PostEntry
+}
+
+type TagItem = {
+  slug: string
+  entry: {
+    title: string | { name: string; slug: string }
+  }
+}
+
+export async function getStaticPaths() {
+  const reader = createReader(process.cwd(), keystaticConfig)
+  const posts = (await reader.collections.posts.all()) as PostItem[]
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: post,
+  }))
+}
+
+const post = Astro.props as PostItem
+
+const reader = createReader(process.cwd(), keystaticConfig)
+
+// Dynamically import the .mdoc file to get the Astro Content component
+const postModule = await import(`../../content/posts/${post.slug}.mdoc`)
+const { Content } = postModule
+
+const allPosts = (await reader.collections.posts.all()) as PostItem[]
+const sortedPosts = allPosts.sort((a, b) => Number(b.entry.arrange) - Number(a.entry.arrange))
+const currentIndex = sortedPosts.findIndex((p) => p.slug === post.slug)
+const nextPost: PostItem | null = currentIndex > 0 ? sortedPosts[currentIndex - 1] : null
+const prevPost: PostItem | null =
+  currentIndex < sortedPosts.length - 1 ? sortedPosts[currentIndex + 1] : null
+
+const videoFile = post.entry.videoFile as string | null
+setPostContext(post.entry.galleries, videoFile)
+
+const allTags = (await reader.collections.tags.all()) as TagItem[]
+const tagMap = new Map(
+  allTags.map((t) => {
+    const title =
+      typeof t.entry.title === 'string' ? t.entry.title : (t.entry.title?.name ?? t.slug)
+    return [t.slug, title]
+  })
+)
+
+function getYouTubeId(url?: string) {
+  if (!url) return ''
+  const match = url.match(
+    /(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/watch\?.+&v=))([^&?]+)/
+  )
+  return match ? match[1] : ''
+}
+
+const youtubeId = getYouTubeId(post.entry.youtube)
+const videoSrc = videoFile || null
+
+// Safely resolve title from either plain string or fields.slug object format
+const resolveTitle = (title: string | { name: string; slug: string } | undefined): string =>
+  typeof title === 'string' ? title : (title?.name ?? '')
+
+const postTitle = resolveTitle(post.entry.title)
+
+function extractHeadings(body: string) {
+  const headingRegex = /^(#{2,4})\s+(.+)$/gm
+  const headings: { id: string; text: string; depth: number; number: string }[] = []
+  let match
+  let h2Counter = 0
+  let h3Counter = 0
+  let h4Counter = 0
+
+  while ((match = headingRegex.exec(body)) !== null) {
+    const depth = match[1].length
+    const text = match[2].trim()
+    const id = text
+      .toLowerCase()
+      .replace(/[^a-z0-9äöå\s-]/g, '')
+      .replace(/\s+/g, '-')
+
+    if (depth === 2) {
+      h2Counter++
+      h3Counter = 0
+      h4Counter = 0
+      headings.push({ id, text, depth, number: `${h2Counter}.` })
+    } else if (depth === 3) {
+      h3Counter++
+      h4Counter = 0
+      headings.push({ id, text, depth, number: `${h2Counter}.${h3Counter}` })
+    } else if (depth === 4) {
+      h4Counter++
+      headings.push({ id, text, depth, number: `${h2Counter}.${h3Counter}.${h4Counter}` })
+    }
+  }
+
+  return headings
+}
+
+// Read the raw .mdoc file to extract headings for TOC
+// (post.entry.content is a parsed Markdoc AST, not a raw string)
+const rawFile = fs.readFileSync(
+  path.join(process.cwd(), 'src/content/posts', `${post.slug}.mdoc`),
+  'utf-8'
+)
+const rawContent = rawFile.replace(/^---[\s\S]*?---\n/, '')
+const toc = extractHeadings(rawContent)
+
+const navButton = 'text-black cursor-pointer hover:text-yellow-600 duration-200'
+---
+
+<Layout title={`${postTitle} | Olkilinna`} heroImage={post.entry.hero}>
+  <main id="top" class="relative pt-14 lg:pt-0">
+    <section
+      class="relative h-70 md:h-150 flex flex-row items-center justify-center text-center overflow-hidden"
+    >
+      <div class="relative z-10">
+        <div class="flex flex-row justify-center gap-2 mb-3 text-white font-bold uppercase">
+          {post.entry.arrange && <p class="bg-black px-1.5">{post.entry.arrange}</p>}
+          {post.entry.date && <p class="bg-black px-2">{post.entry.date}</p>}
+        </div>
+
+        <h1
+          class="text-3xl md:text-4xl font-bold font-heading mb-2 px-3 bg-white uppercase pt-2 mx-5"
+        >
+          {postTitle}
+        </h1>
+      </div>
+
+      <img
+        src={post.entry.hero}
+        alt={postTitle}
+        class="w-full h-full object-cover absolute inset-0 z-0"
+      />
+    </section>
+
+    {
+      post.entry.tags && post.entry.tags.length > 0 && (
+        <section class="flex flex-col px-4 md:flex-row gap-4 w-[90%] mx-auto md:w-full items-start md:items-center justify-center py-6 border-b border-gray-300">
+          <h2 class="font-bold">Kategoriat:</h2>
+          <div class="flex flex-row flex-wrap gap-y-2 gap-3">
+            {post.entry.tags.map((tag) => (
+              <a href="/" class="tag underline md:no-underline md:hover:underline ">
+                {tagMap.get(tag) || tag}
+              </a>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    <section class="my-7 md:my-10 px-4 max-w-250 mx-auto">
+      {
+        post.entry.ingressi && (
+          <p class="text-lg md:text-2xl italic leading-normal mx-3">{post.entry.ingressi}</p>
+        )
+      }
+    </section>
+
+    <section id="toc" class="my-5 px-4 max-w-250 mx-auto">
+      <div class="bg-[#f4f4f5] p-5 px-8 mx-3 w-fit">
+        <h2 class="text-2xl font-semibold mb-4">Sisällysluettelo</h2>
+        <ul class="space-y-0">
+          {
+            toc.map((item) => (
+              <li
+                class={
+                  item.depth === 3
+                    ? 'ml-6 border-l border-gray-300 pl-2 py-1 underline'
+                    : item.depth === 4
+                      ? 'ml-10 underline border-l border-gray-300 pl-2 py-1'
+                      : 'underline py-1'
+                }
+              >
+                <a href={`#${item.id}`} class="hover:text-yellow-600 duration-200">
+                  <span class="">{item.number}</span>
+                  {item.text}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    <section class={`w-full max-w-250 mx-auto px-6 pb-12 prose ${proseClasses}`}>
+      <Content galleries={post.entry.galleries} />
+      {
+        videoSrc && (
+          <div class="mt-8">
+            <video controls class="w-full mx-auto">
+              <source src={videoSrc} />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        )
+      }
+      {
+        youtubeId && (
+          <div id="pitka-video" class="mt-8">
+            <h2 class="font-heading text-2xl mx-auto text-center">Pitkä video</h2>
+            <div class="relative w-full" style="padding-bottom: 56.25%;">
+              <iframe
+                class="absolute top-0 left-0 w-full h-full"
+                src={`https://www.youtube.com/embed/${youtubeId}`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              />
+            </div>
+          </div>
+        )
+      }
+    </section>
+
+    <!-- Muut artikkelit -->
+    <section
+      id="muut-artikkelit"
+      class="flex flex-col gap-5 items-center mb-10 border-t border-gray-200 py-10"
+    >
+      <h2 class="text-2xl font-bold uppercase">Muut artikkelit</h2>
+      <div class="flex flex-col lg:flex-row gap-10 justify-between items-center">
+        {
+          nextPost ? (
+            <a href={`/blogi/${nextPost.slug}`}>
+              <h3 class="text-lg font-medium text-center mb-2">Seuraava:</h3>
+              <div
+                class="bg-cover bg-center w-[20rem] h-40 flex flex-col items-center justify-center text-white"
+                style={`background-image: url(${nextPost.entry.hero})`}
+              >
+                <p class="bg-black text-white text-xs font-semibold px-1 uppercase">
+                  {nextPost.entry.date}
+                </p>
+                <h4 class="bg-white text-black px-2 text-sm font-bold mt-1.5">
+                  <span>{nextPost.entry.arrange}</span>. {resolveTitle(nextPost.entry.title)}
+                </h4>
+              </div>
+            </a>
+          ) : (
+            <div>
+              <h3 class="text-lg font-medium text-center mb-2">Seuraava:</h3>
+              <div class="bg-[#a1a1aa] w-[20rem] h-40 flex flex-col items-center justify-center">
+                <h4 class="bg-white text-black px-2 text-sm font-bold uppercase">
+                  Ei uudempia postauksia
+                </h4>
+              </div>
+            </div>
+          )
+        }
+        <p class="text-center">
+          Kaikkiin postauksiin pääset sivulta <a
+            href="/blogi"
+            class="font-bold underline hover:text-yellow-600 duration-200">Blogi</a
+          >.
+        </p>
+        {
+          prevPost ? (
+            <a href={`/blogi/${prevPost.slug}`}>
+              <h3 class="text-lg font-medium text-center mb-2">Edellinen:</h3>
+              <div
+                class="bg-cover bg-center w-[20rem] h-40 flex flex-col items-center justify-center text-white"
+                style={`background-image: url(${prevPost.entry.hero})`}
+              >
+                <p class="bg-black text-white text-xs font-semibold px-1 uppercase">
+                  {prevPost.entry.date}
+                </p>
+                <h4 class="bg-white text-black px-2 text-sm font-bold mt-1.5">
+                  <span>{prevPost.entry.arrange}</span>. {resolveTitle(prevPost.entry.title)}
+                </h4>
+              </div>
+            </a>
+          ) : (
+            <div>
+              <h3 class="text-lg font-medium text-center mb-2">Edellinen:</h3>
+              <div class="bg-[#a1a1aa] w-[20rem] h-40 flex flex-col items-center justify-center">
+                <h4 class="bg-white text-black px-2 text-sm font-bold uppercase">
+                  Ei vanhempia postauksia
+                </h4>
+              </div>
+            </div>
+          )
+        }
+      </div>
+    </section>
+
+    <!-- Navigation -->
+    <nav class="sticky bottom-0 w-full bg-white border-t border-gray-300 py-3 px-3">
+      <div class="max-w-200 w-full mx-auto flex flex-col gap-3 md:gap-2">
+        <div class="grid grid-cols-3 items-center w-full">
+          <div class="flex justify-start">
+            {
+              nextPost && (
+                <a
+                  href={`/blogi/${nextPost.slug}`}
+                  class="hover:text-yellow-600 duration-200 flex flex-row items-center gap-3"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="17"
+                    height="17"
+                    aria-hidden="true"
+                    fill="currentColor"
+                    viewBox="0 0 256 256"
+                  >
+                    <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z" />
+                  </svg>
+                  <p>Seuraava</p>
+                </a>
+              )
+            }
+          </div>
+          <div class="flex justify-center">
+            <a href="/blogi" class={`${navButton} h-6 w-6`}>
+              <p class="sr-only">Kaikki artikkelit</p>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+                fill="currentColor"
+                viewBox="0 0 256 256"
+                ><path
+                  d="M231.65,194.55,198.46,36.75a16,16,0,0,0-19-12.39L132.65,34.42a16.08,16.08,0,0,0-12.3,19l33.19,157.8A16,16,0,0,0,169.16,224a16.25,16.25,0,0,0,3.38-.36l46.81-10.06A16.09,16.09,0,0,0,231.65,194.55ZM136,50.15c0-.06,0-.09,0-.09l46.8-10,3.33,15.87L139.33,66Zm6.62,31.47,46.82-10.05,3.34,15.9L146,97.53Zm6.64,31.57,46.82-10.06,13.3,63.24-46.82,10.06ZM216,197.94l-46.8,10-3.33-15.87L212.67,182,216,197.85C216,197.91,216,197.94,216,197.94ZM104,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V48A16,16,0,0,0,104,32ZM56,48h48V64H56Zm0,32h48v96H56Zm48,128H56V192h48v16Z"
+                ></path></svg
+              >
+            </a>
+          </div>
+          <div class="flex justify-end">
+            {
+              prevPost && (
+                <a
+                  href={`/blogi/${prevPost.slug}`}
+                  class="hover:text-yellow-600 duration-200 flex flex-row items-center gap-3"
+                >
+                  <p>Edellinen</p>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="17"
+                    height="17"
+                    aria-hidden="true"
+                    fill="currentColor"
+                    viewBox="0 0 256 256"
+                  >
+                    <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z" />
+                  </svg>
+                </a>
+              )
+            }
+          </div>
+        </div>
+        <div class="flex flex-row justify-center mx-auto gap-15">
+          <a href="#top" class={`${navButton} h-5 w-5`}>
+            <p class="sr-only">Siirry sivun alkuun</p>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" aria-hidden="true"
+              ><rect width="256" height="256" fill="none"></rect><polyline
+                points="48 200 128 120 208 200"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="16"></polyline><polyline
+                points="48 120 128 40 208 120"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="16"></polyline></svg
+            >
+          </a>
+          <div class="flex flex-row gap-5">
+            <a href="#toc" class={`${navButton} h-5 w-5`}>
+              <p class="sr-only">Sisällysluettelo</p>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="26"
+                height="26"
+                fill="currentColor"
+                viewBox="0 0 256 256"
+                aria-hidden="true"
+                ><path
+                  d="M224,128a8,8,0,0,1-8,8H104a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM104,72H216a8,8,0,0,0,0-16H104a8,8,0,0,0,0,16ZM216,184H104a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16ZM43.58,55.16,48,52.94V104a8,8,0,0,0,16,0V40a8,8,0,0,0-11.58-7.16l-16,8a8,8,0,0,0,7.16,14.32ZM79.77,156.72a23.73,23.73,0,0,0-9.6-15.95,24.86,24.86,0,0,0-34.11,4.7,23.63,23.63,0,0,0-3.57,6.46,8,8,0,1,0,15,5.47,7.84,7.84,0,0,1,1.18-2.13,8.76,8.76,0,0,1,12-1.59A7.91,7.91,0,0,1,63.93,159a7.64,7.64,0,0,1-1.57,5.78,1,1,0,0,0-.08.11L33.59,203.21A8,8,0,0,0,40,216H72a8,8,0,0,0,0-16H56l19.08-25.53A23.47,23.47,0,0,0,79.77,156.72Z"
+                ></path></svg
+              >
+            </a>
+            <p aria-hidden="true">|</p>
+            <a href="#muut-artikkelit" class={`${navButton} h-6 w-6`}>
+              <p class="sr-only">Muut artikkelit</p>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" aria-hidden="true"
+                ><rect width="256" height="256" fill="none"></rect><circle
+                  cx="128"
+                  cy="128"
+                  r="24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-miterlimit="10"
+                  stroke-width="16"></circle><circle
+                  cx="48"
+                  cy="128"
+                  r="24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-miterlimit="10"
+                  stroke-width="16"></circle><circle
+                  cx="208"
+                  cy="128"
+                  r="24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-miterlimit="10"
+                  stroke-width="16"></circle></svg
+              >
+            </a>
+            {
+              youtubeId && (
+                <>
+                  <p aria-hidden="true">|</p>
+                  <a href="#pitka-video" class={`${navButton} h-6 w-6`}>
+                    <p class="sr-only">Pitkä video</p>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 256 256"
+                      aria-hidden="true"
+                    >
+                      <>
+                        <rect fill="none" />
+                        <polygon
+                          points="160 128 112 96 112 160 160 128"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="16"
+                        />
+                        <path
+                          d="M24,128c0,29.91,3.07,47.45,5.41,56.47A16,16,0,0,0,39,195.42C72.52,208.35,128,208,128,208s55.48.35,89-12.58a16,16,0,0,0,9.63-10.95c2.34-9,5.41-26.56,5.41-56.47s-3.07-47.45-5.41-56.47a16,16,0,0,0-9.63-11C183.48,47.65,128,48,128,48s-55.48-.35-89,12.58a16,16,0,0,0-9.63,11C27.07,80.54,24,98.09,24,128Z"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="16"
+                        />
+                      </>
+                    </svg>
+                  </a>
+                </>
+              )
+            }
+          </div>
+          <a href="#bottom" class={`${navButton} h-5 w-5`}>
+            <p class="sr-only">Siirry sivun loppuun</p>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" aria-hidden="true"
+              ><rect width="256" height="256" fill="none"></rect><polyline
+                points="208 136 128 216 48 136"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="16"></polyline><polyline
+                points="208 56 128 136 48 56"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="16"></polyline></svg
+            >
+          </a>
+        </div>
+      </div>
+    </nav>
+    <div id="bottom"></div>
+  </main>
+</Layout>
+
+<script is:inline src="/fslightbox.js"></script>
+<script is:inline>
+  if (typeof fsLightboxInstances !== 'undefined') {
+    Object.keys(fsLightboxInstances).forEach(function (key) {
+      fsLightboxInstances[key].props.showThumbsOnMount = true
+    })
+  }
+</script>
+<script is:inline>
+  document.addEventListener(
+    'click',
+    function (e) {
+      var link = e.target.closest(
+        'a[href="#top"], a[href="#toc"], a[href="#muut-artikkelit"], a[href="#pitka-video"], a[href="#bottom"]'
+      )
+      if (link) {
+        e.preventDefault()
+        e.stopImmediatePropagation()
+
+        var href = link.getAttribute('href')
+        var containers = document.querySelectorAll('.h-full')
+        for (var i = 0; i < containers.length; i++) {
+          containers[i].style.overflow = 'visible'
+        }
+
+        if (href === '#bottom') {
+          document.documentElement.scrollTop = document.documentElement.scrollHeight
+          document.body.scrollTop = document.body.scrollHeight
+        } else {
+          var targetId = href.substring(1)
+          var target = document.getElementById(targetId)
+          if (target) {
+            var top = target.getBoundingClientRect().top + window.pageYOffset
+            document.documentElement.scrollTop = top
+            document.body.scrollTop = top
+          }
+        }
+      }
+    },
+    true
+  )
+</script>

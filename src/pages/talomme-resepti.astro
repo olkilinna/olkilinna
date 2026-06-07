@@ -1,0 +1,45 @@
+---
+import Layout from '../layouts/Layout.astro'
+import { createReader } from '@keystatic/core/reader'
+import keystaticConfig from '../../keystatic.config'
+
+import InfoCard from '../components/InfoCard.astro'
+import MaterialCard from '../components/MaterialCard.astro'
+import CardList from '../components/CardList.astro'
+import { proseClasses } from '../lib/prose-styles'
+
+const reader = createReader(process.cwd(), keystaticConfig)
+const pageData = await reader.singletons.talommeResepti.read()
+
+if (!pageData) {
+  return Astro.redirect('/')
+}
+
+import { Content } from '../content/pages/talomme-resepti.mdoc'
+
+// Pass components directly; Keystatic automatically maps block schema fields to component props
+const components = {
+  infoCard: InfoCard,
+  materialCard: MaterialCard,
+  cardList: CardList,
+}
+
+const pageTitle = typeof pageData.title === 'string' ? pageData.title : 'Talomme resepti'
+---
+
+<Layout title={`${pageTitle} | Olkilinna`} heroImage="/talomme-resepti-hero.webp">
+  <main class="w-full mx-auto pb-12 lg:mt-0 mt-14">
+    <section
+      class="bg-[url('/talomme-resepti-hero.webp')] bg-cover bg-center h-[40vh] md:h-120 flex items-center justify-center"
+    >
+      <h1
+        class="mx-10 md:mx-0 text-[2.5rem] md:text-[4rem] uppercase font-bold font-heading bg-white text-black pt-2 px-4 leading-10 md:leading-16 text-center"
+      >
+        {pageTitle}
+      </h1>
+    </section>
+    <div class={`px-6 max-w-300 w-full mx-auto mt-7 md:mt-10 prose ${proseClasses}`}>
+      <Content components={components} />
+    </div>
+  </main>
+</Layout>

@@ -1,0 +1,48 @@
+---
+import Layout from '../layouts/Layout.astro'
+import { createReader } from '@keystatic/core/reader'
+import keystaticConfig from '../../keystatic.config'
+import { proseClasses } from '../lib/prose-styles'
+
+import SourceCard from '../components/SourceCard.astro'
+
+const reader = createReader(process.cwd(), keystaticConfig)
+const pageData = await reader.singletons.tietolahteita.read()
+
+if (!pageData) {
+  return Astro.redirect('/')
+}
+
+import { Content } from '../content/pages/tietolahteita.mdoc'
+
+const components = {
+  sourceCard: SourceCard,
+}
+
+const titlePart1 = typeof pageData.titlePart1 === 'string' ? pageData.titlePart1 : ''
+const titleSpan = typeof pageData.titleSpan === 'string' ? pageData.titleSpan : ''
+const titlePart2 = typeof pageData.titlePart2 === 'string' ? pageData.titlePart2 : ''
+const fullTitle = `${titlePart1}${titleSpan ? ' ' + titleSpan : ''}${titlePart2}`
+---
+
+<Layout title={`${fullTitle} | Olkilinna`} heroImage="/tietolahteita-hero.webp">
+  <main class="w-full mx-auto pb-12 lg:mt-0 mt-14">
+    <section
+      class="bg-[url('/tietolahteita-hero.webp')] bg-cover bg-center h-[40vh] md:h-120 flex items-center justify-center"
+    >
+      <h1 class="font-bold uppercase font-heading text-center flex flex-col items-center gap-2">
+        <span class="bg-black text-white text-[1.2rem] md:text-[1.5rem] px-3 pt-1"
+          >{titlePart1}</span
+        >
+        {titleSpan && <span class="text-amber-600">{titleSpan}</span>}
+        <span
+          class="mx-0 text-[2.2rem] md:text-[4rem] bg-white text-black pt-3 px-3 leading-[2.2rem] md:leading-16"
+          >{titlePart2}</span
+        >
+      </h1>
+    </section>
+    <div class={`px-6 max-w-300 w-full mx-auto mt-7 md:mt-10 prose ${proseClasses}`}>
+      <Content components={components} />
+    </div>
+  </main>
+</Layout>

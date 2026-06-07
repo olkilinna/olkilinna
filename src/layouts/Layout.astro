@@ -1,0 +1,39 @@
+---
+import '../styles/global.css'
+import Nav from '../components/Nav.astro'
+import Footer from '../components/Footer.astro'
+
+const { title = 'Olkilinna', heroImage } = Astro.props
+const siteUrl = 'https://olkilinna.fi' // Replace with your actual domain
+---
+
+<!doctype html>
+<html lang="fi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    
+    {heroImage && (
+      <>
+        <!-- For Pagefind site search -->
+        <meta data-pagefind-default-meta="image[content]" content={heroImage} />
+        <!-- For Google and Social Media -->
+        <meta property="og:image" content={`${siteUrl}${heroImage}`} />
+        <meta name="twitter:image" content={`${siteUrl}${heroImage}`} />
+      </>
+    )}
+  </head>
+  <body class="font-main font-normal text-[1rem] bg-white">
+    <div class="w-full h-full flex flex-row">
+      <Nav />
+      <div class="flex flex-col w-full">
+        <slot />
+      </div>
+    </div>
+    <Footer />
+  </body>
+</html>

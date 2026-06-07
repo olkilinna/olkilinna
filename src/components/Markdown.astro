@@ -1,0 +1,42 @@
+---
+import { proseClasses } from '../lib/prose-styles'
+
+const { content, class: className = '' } = Astro.props
+if (!content) return null
+
+const parseInlineMarkdown = (text: string) => {
+  return (
+    text
+      // Bold: **text**
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      // Italic: *text*
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      // Links: [text](url)
+      .replace(
+        /\[([^\]]+)\]\(([^)]+)\)/g,
+        '<a href="$2" class="text-black underline hover:text-link-hover font-semibold duration-200">$1</a>'
+      )
+  )
+}
+
+const html = content
+  .split('\n\n')
+  .map((block) => {
+    const trimmed = block.trim()
+    if (trimmed.startsWith('- ')) {
+      const items = trimmed
+        .split('\n')
+        .map((line) => `<li>${parseInlineMarkdown(line.replace(/^- /, '').trim())}</li>`)
+        .join('')
+      return `<ul class="list-disc pl-5 space-y-1 leading-normal">${items}</ul>`
+    }
+    if (trimmed.startsWith('>')) {
+      const quoteText = trimmed.replace(/^>\s?/gm, '').trim()
+      return `<blockquote class="border-l-4 border-gray-300 pl-4 italic text-black leading-normal my-4">${parseInlineMarkdown(quoteText)}</blockquote>`
+    }
+    return `<p class="text-black leading-normal">${parseInlineMarkdown(trimmed.replace(/\n/g, '<br>'))}</p>`
+  })
+  .join('')
+---
+
+<div set:html={html} class={`${proseClasses} ${className}`.trim()} />

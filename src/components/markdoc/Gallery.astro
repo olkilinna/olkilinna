@@ -1,0 +1,76 @@
+---
+import { getGalleries } from '../../lib/post-context'
+
+const { id } = Astro.props
+const galleries = getGalleries()
+
+type GalleryImage = {
+  image: string
+  alt?: string
+  caption?: string
+}
+
+type Gallery = {
+  id: { name?: string; slug?: string }
+  images: GalleryImage[]
+}
+
+const typedGalleries = (galleries as Gallery[]) || []
+const gallery = typedGalleries.find((g) => g.id.name === id || g.id.slug === id)
+
+const images = gallery?.images || []
+---
+
+<div class="my-8 not-prose" data-gallery={id}>
+  {
+    images.length === 1 ? (
+      <figure class="flex flex-col items-center">
+        <a
+          data-fslightbox={id}
+          data-fslightbox-thumb={images[0].image}
+          href={images[0].image}
+          class="block w-full overflow-hidden rounded-lg"
+        >
+          <img
+            src={images[0].image}
+            alt={images[0].alt || ''}
+            class="w-full h-auto object-cover transition-opacity duration-200 hover:opacity-90"
+          />
+        </a>
+        {images[0].caption && (
+          <figcaption class="text-sm text-gray-500 italic mt-2 text-center">
+            {images[0].caption}
+          </figcaption>
+        )}
+      </figure>
+    ) : images.length > 1 ? (
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {images.map((img, index) => {
+          const src = typeof img.image === 'string' ? img.image : ''
+          if (!src) return null
+          return (
+            <a
+              data-fslightbox={id}
+              data-fslightbox-thumb={src}
+              href={src}
+              class="relative group block overflow-hidden"
+            >
+              <img
+                src={src}
+                alt={img.alt || ''}
+                class="w-full h-auto object-cover transition-transform duration-200 group-hover:scale-105"
+              />
+              <div class="bg-black text-white py-0.5 px-2.5 absolute bottom-1 right-1 font-bold">
+                {index + 1}
+              </div>
+            </a>
+          )
+        })}
+      </div>
+    ) : (
+      <p class="text-sm text-gray-500 italic">No images found for gallery "{id}"</p>
+    )
+  }
+</div>
+
+

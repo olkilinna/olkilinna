@@ -1,0 +1,18 @@
+---
+import { getVideoFile } from '../../lib/post-context'
+
+const { file } = Astro.props
+const contextVideoFile = getVideoFile()
+const src = file || contextVideoFile
+---
+
+{
+  src && (
+    <div class="my-10 mb-15">
+      <video controls class="w-full mx-auto">
+        <source src={src} />
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  )
+}

@@ -1,0 +1,45 @@
+---
+import { Image } from 'astro:assets'
+---
+
+<footer id="footer" class="w-full bg-white p-10 pt-8 lg:pt-13 border-t border-yellow-500">
+  <div class="flex flex-col lg:flex-row justify-between gap-7 lg:gap-4 w-full max-w-300 mx-auto">
+    <div class="flex flex-col gap-5 items-center lg:flex-row lg:gap-20 lg:items-start">
+      <a href="/" class="w-full">
+        <Image src="/logo.svg" alt="Olkilinna" width="150" height="50" class="mb-2 mx-auto" />
+      </a>
+
+      <div class="flex flex-row gap-10 mx-auto lg:min-w-70">
+        <ul class="flex flex-col gap-2 items-center lg:items-start">
+          <li><a href="/" class="hover:underline">Etusivu</a></li>
+          <li><a href="/" class="hover:underline">Blogi</a></li>
+          <li><a href="/" class="hover:underline">Tietolähteitä</a></li>
+        </ul>
+        <ul class="flex flex-col gap-2 items-center lg:items-start">
+          <li><a href="/" class="hover:underline">Talomme resepti</a></li>
+          <li><a href="/" class="hover:underline">Olkielementit</a></li>
+          <li><a href="/" class="hover:underline">Sivustohaku</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="flex flex-col gap-5 lg:flex-row lg:gap-10">
+      <div class="flex flex-col items-center">
+        <p class="font-semibold font-heading text-lg tracking-wide text-center">INSTAGRAM</p>
+        <a
+          href="https://www.instagram.com/olkilinna/"
+          class="font-semibold underline hover:text-yellow-600 duration-200">@olkilinna</a
+        >
+      </div>
+      <div class="flex flex-col items-center">
+        <p class="uppercase font-semibold font-heading text-lg tracking-wide">Sähköposti</p>
+        <p class="font-bold">olkilinna[symboli]gmail.com</p>
+        <p>Korvaa [symboli] tällä merkillä: @</p>
+      </div>
+    </div>
+  </div>
+  <div
+    class="w-full max-w-300 mx-auto border-t border-gray-300 text-center p-4 mt-15 font-semibold"
+  >
+    © 2026 Olkilinna
+  </div>
+</footer>

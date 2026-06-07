@@ -1,0 +1,28 @@
+---
+const { url } = Astro.props
+
+function getYouTubeId(url?: string) {
+  if (!url) return ''
+  const match = url.match(
+    /(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/watch\?.+&v=))([^&?]+)/
+  )
+  return match ? match[1] : ''
+}
+
+const videoId = getYouTubeId(url)
+---
+
+{
+  videoId && (
+    <div class="my-6">
+      <div class="relative w-full max-w-2xl mx-auto" style="padding-bottom: 56.25%;">
+        <iframe
+          class="absolute top-0 left-0 w-full h-full"
+          src={`https://www.youtube.com/embed/${videoId}`}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        />
+      </div>
+    </div>
+  )
+}
