@@ -41,6 +41,21 @@ All commands are run from the root of the project, from a terminal:
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `npm run astro -- --help` | Get help using the Astro CLI                     |
 
+## 💻 Development & Git Workflow
+
+After making changes to the project, use the following commands to save and push your work to GitHub:
+
+```bash
+# 1. Stage all modified files
+git add .
+
+# 2. Commit the changes with a descriptive message
+git commit -m "Describe your changes here"
+
+# 3. Push the changes to GitHub
+git push
+```
+
 ## 👀 Want to learn more?
 
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
