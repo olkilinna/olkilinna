@@ -4,16 +4,19 @@ import { defineConfig } from 'astro/config'
 import react from '@astrojs/react'
 import markdoc from '@astrojs/markdoc'
 import keystatic from '@keystatic/astro'
+import sitemap from '@astrojs/sitemap'
 import tailwindcss from '@tailwindcss/vite'
 
 const isDev = process.env.NODE_ENV === 'development'
 
 // https://astro.build/config
 export default defineConfig({
+  site: 'https://olkilinna.fi',
   integrations: [
     react(),
     markdoc(),
     isDev ? keystatic() : null,
+    sitemap(),
   ].filter(Boolean),
   vite: {
     // @ts-expect-error vite version mismatch between @tailwindcss/vite and astro's vendored vite
