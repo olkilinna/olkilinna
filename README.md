@@ -46,13 +46,20 @@ All commands are run from the root of the project, from a terminal:
 After making changes to the project, use the following commands to save and push your work to GitHub:
 
 ```bash
-# 1. Stage all modified files
+# 1. Check in you're logged in to Huuttituuti github
+gh auth status
+
+# 2. If not, log out and in
+gh auth logout
+gh auth login
+
+# 3. Stage all modified files
 git add .
 
-# 2. Commit the changes with a descriptive message
+# 4. Commit the changes with a descriptive message
 git commit -m "Describe your changes here"
 
-# 3. Push the changes to GitHub
+# 5. Push the changes to GitHub
 git push
 ```
 
@@ -61,13 +68,17 @@ git push
 Currently, the Keystatic admin panel only works locally (`npm run dev`). To enable the admin panel on the live Netlify site (e.g., `olkilinna.fi/admin`), you must switch Keystatic to **GitHub Mode**. This allows the live site to authenticate with GitHub and commit content changes directly to the repository.
 
 ### Steps to Enable:
+
 1. **Create a GitHub App**: Run the Keystatic CLI tool to generate the app configuration:
+
    ```bash
    npx @keystatic/create-app
    ```
+
    Follow the prompts to create the app in the `olkilinna` GitHub organization. Save the provided **App ID** and **Private Key**.
 
 2. **Update `keystatic.config.tsx`**: Change the storage mode to GitHub:
+
    ```typescript
    export default config({
      storage: {
@@ -79,6 +90,7 @@ Currently, the Keystatic admin panel only works locally (`npm run dev`). To enab
    ```
 
 3. **Update `astro.config.mjs`**: Remove the development-only restriction so Keystatic loads in production:
+
    ```javascript
    integrations: [
      react(),
