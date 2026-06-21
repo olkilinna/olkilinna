@@ -163,7 +163,7 @@ const navButton = 'text-black cursor-pointer hover:text-yellow-600 duration-200'
           <h2 class="font-bold">Kategoriat:</h2>
           <div class="flex flex-row flex-wrap gap-y-2 gap-3">
             {post.entry.tags.map((tag) => (
-              <a href="/" class="tag underline md:no-underline md:hover:underline ">
+              <a href={`/blogi?tag=${tag}`} class="tag underline md:no-underline md:hover:underline ">
                 {tagMap.get(tag) || tag}
               </a>
             ))}
