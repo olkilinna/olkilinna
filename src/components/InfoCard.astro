@@ -34,8 +34,12 @@ const { heading, content } = Astro.props
 </li>
 
 <script is:inline>
+  let wasDesktop = window.innerWidth >= 768
+
   function syncAccordionState() {
     const isDesktop = window.innerWidth >= 768
+    if (isDesktop === wasDesktop) return
+    wasDesktop = isDesktop
     document.querySelectorAll('.js-accordion').forEach((el) => {
       if (isDesktop) {
         el.setAttribute('open', '')
