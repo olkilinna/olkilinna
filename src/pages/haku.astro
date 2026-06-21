@@ -4,8 +4,9 @@ import Layout from '../layouts/Layout.astro'
 
 <Layout title="Sivustohaku | Olkilinna">
   <main class="w-full max-w-4xl mx-auto px-6 py-12 lg:mt-0 mt-14">
-    <h1 class="text-3xl font-bold mb-8">Sivustohaku</h1>
-    <div id="search" class="w-full max-w-2xl"></div>
+    <h1 class="text-3xl font-bold mb-3">Sivustohaku</h1>
+    <p>Hae sivustolta kirjoittamalla hakusana.</p>
+    <div id="search" class="w-full max-w-2xl mt-8"></div>
   </main>
 </Layout>
 
@@ -21,6 +22,53 @@ import Layout from '../layouts/Layout.astro'
         placeholder: 'Hae sivustolta...',
       },
     })
+
+    /* SIMPLE ANALYTICS  */
+    // Configuration
+    const MIN_CHARACTERS = 3
+    const DEBOUNCE_DELAY = 3000 // 3 second
+    let searchTimer
+
+    const searchInput = document.querySelector('#search input[type="text"]')
+
+    if (searchInput) {
+      // 1. Handle typing (Debounced)
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim().toLowerCase()
+
+        clearTimeout(searchTimer)
+
+        if (query.length >= MIN_CHARACTERS) {
+          searchTimer = setTimeout(() => {
+            sendSearchToAnalytics(query)
+          }, DEBOUNCE_DELAY)
+        }
+      })
+
+      // 2. Handle "Enter" key (Immediate)
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const query = e.target.value.trim().toLowerCase()
+          if (query.length >= MIN_CHARACTERS) {
+            clearTimeout(searchTimer) // Prevent double-firing with the debounce
+            sendSearchToAnalytics(query)
+          }
+        }
+      })
+    }
+
+    // 3. Simple Analytics Event Function
+    function sendSearchToAnalytics(query) {
+      if (window.sa_event) {
+        // We use a custom attribute to ensure we don't track the same word twice in a row
+        if (window.lastSearchQuery === query) return
+
+        //console.log(`Simple Analytics: Tracking search for "${query}"`);
+        sa_event('click_search', { search_query: `${query}` })
+
+        window.lastSearchQuery = query
+      }
+    }
   })
 </script>
 

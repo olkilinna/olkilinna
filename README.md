@@ -46,7 +46,7 @@ All commands are run from the root of the project, from a terminal:
 After making changes to the project, use the following commands to save and push your work to GitHub:
 
 ```bash
-# 1. Check in you're logged in to Huuttituuti github
+# 1. Check in you're logged in to Olkilinna github
 gh auth status
 
 # 2. If not, log out and in

@@ -15,9 +15,9 @@ const divBorderClass = !isColorCode ? color : ''
 ---
 
 <li class="pros-n-cons-card h-full not-prose">
-  <details class="group w-full js-accordion">
-    <summary
-      class={`w-full text-white px-4 py-2 flex justify-between items-center cursor-pointer list-none ${summaryClass}`}
+  <div class="accordion w-full">
+    <div
+      class={`accordion-header w-full text-white px-4 py-2 flex justify-between items-center cursor-pointer ${summaryClass}`}
       style={summaryStyle}
     >
       <h3 class="not-prose text-xl font-heading font-medium">
@@ -25,44 +25,22 @@ const divBorderClass = !isColorCode ? color : ''
       </h3>
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="20"
-        height="20"
-        fill="currentColor"
+        class="h-5 w-5 arrow block transition-transform duration-200 rotate-90 md:hidden"
+        fill="none"
         aria-hidden="true"
-        class="arrow block transition-transform duration-200 group-open:-rotate-90"
-        viewBox="0 0 256 256"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
       >
-        <path
-          d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"
         ></path>
       </svg>
-    </summary>
+    </div>
 
     <div
-      class={`content hidden group-open:block py-4 px-5 not-prose prose-blockquote:ml-0 border-2 ${divBorderClass}`}
+      class={`content hidden py-4 px-5 not-prose prose-blockquote:ml-0 border-2 ${divBorderClass}`}
       style={divBorderStyle}
     >
       <Markdown content={content} class="mb-4 text-black" />
     </div>
-  </details>
+  </div>
 </li>
-
-<script is:inline>
-  let wasDesktop = window.innerWidth >= 768
-
-  function syncAccordionState() {
-    const isDesktop = window.innerWidth >= 768
-    if (isDesktop === wasDesktop) return
-    wasDesktop = isDesktop
-    document.querySelectorAll('.js-accordion').forEach((el) => {
-      if (isDesktop) {
-        el.setAttribute('open', '')
-      } else {
-        el.removeAttribute('open')
-      }
-    })
-  }
-
-  syncAccordionState()
-  window.addEventListener('resize', syncAccordionState)
-</script>
