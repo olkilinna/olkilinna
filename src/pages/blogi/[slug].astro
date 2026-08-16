@@ -163,7 +163,10 @@ const navButton = 'text-black cursor-pointer hover:text-yellow-600 duration-200'
           <h2 class="font-bold">Kategoriat:</h2>
           <div class="flex flex-row flex-wrap gap-y-2 gap-3">
             {post.entry.tags.map((tag) => (
-              <a href={`/blogi?tag=${tag}`} class="tag underline md:no-underline md:hover:underline ">
+              <a
+                href={`/blogi?tag=${tag}`}
+                class="tag underline md:no-underline md:hover:underline "
+              >
                 {tagMap.get(tag) || tag}
               </a>
             ))}
@@ -181,7 +184,7 @@ const navButton = 'text-black cursor-pointer hover:text-yellow-600 duration-200'
     </section>
 
     <section id="toc" class="my-5 px-4 max-w-250 mx-auto">
-      <div class="bg-[#f4f4f5] p-5 px-8 mx-3 w-fit">
+      <div class="bg-light-grey p-5 px-8 mx-3 w-fit">
         <h2 class="text-2xl font-semibold mb-4">Sisällysluettelo</h2>
         <ul class="space-y-0">
           {
